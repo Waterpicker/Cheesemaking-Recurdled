@@ -1,6 +1,7 @@
 package ghana7.cheesemaking.tileentity;
 
 import ghana7.cheesemaking.CheesemakingMod;
+import ghana7.cheesemaking.block.ItemStackHandler;
 import ghana7.cheesemaking.item.Cheese;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -21,42 +22,45 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class CheeseRackTileEntity extends BlockEntity {
-    public SimpleContainer itemHandler = createHandler();
-    private SimpleContainer createHandler() {
-        return new SimpleContainer(8) {
+    public ItemStackHandler itemHandler = createHandler();
+    private ItemStackHandler  createHandler() {
+        return new ItemStackHandler(8) {
             @Override
-            public void setChanged() {
-                CheeseRackTileEntity.this.setChanged();
+            protected void onContentsChanged(int slot) {
+                setChanged();
             }
 
             @Override
-            public boolean canPlaceItem(int slot, @NotNull ItemStack stack) {
+            public boolean isItemValid(int slot, ItemStack stack) {
                 return stack.getItem() instanceof Cheese;
             }
 
             @Override
-            public int getMaxStackSize() {
+            protected int getStackLimit(int slot, ItemStack stack) {
                 return 1;
             }
 
             @Override
-            public void setItem(int slot, @NotNull ItemStack stack) {
-                assert level != null;
+            public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
-                super.setItem(slot, stack);
+                return super.insertItem(slot, stack, simulate);
             }
 
             @Override
-            public @NotNull ItemStack removeItem(int slot, int amount) {
-                assert level != null;
+            public ItemStack extractItem(int slot, int amount, boolean simulate) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
-                return super.removeItem(slot, amount);
+                return super.extractItem(slot, amount, simulate);
             }
         };
     }
 
     public NonNullList<ItemStack> getAllItems() {
-        return IntStream.range(0, itemHandler.getContainerSize()).mapToObj(a -> itemHandler.getItem(a)).collect(Collectors.toCollection(NonNullList::create));
+        NonNullList<ItemStack> items = NonNullList.create();
+        for(int i = 0; i < itemHandler.getSlots(); i++) {
+            ItemStack stack = itemHandler.getStackInSlot(i);
+            items.add(stack);
+        }
+        return items;
     }
 
     private final int timerMax = 1200; //60 seconds
@@ -68,13 +72,14 @@ public class CheeseRackTileEntity extends BlockEntity {
     }
 
     public void tick() {
-        assert level != null;
         if(level.isClientSide()) {
             return;
         }
 
         if(timer > 0) {
-            timer--;
+            if(true) {
+                timer--;
+            }
         }
 
         if(timer <= 0) {
@@ -82,10 +87,11 @@ public class CheeseRackTileEntity extends BlockEntity {
             //CheesemakingMod.LOGGER.debug(getEnvironmentType());
             Cheese.EnvironmentType envType = getEnvironmentType();
             for(int i = 0; i < 8; i++) {
-                if(itemHandler.getItem(i).getItem() instanceof Cheese cheeseItem) {
+                if(itemHandler.getStackInSlot(i).getItem() instanceof Cheese) {
+                    Cheese cheeseItem = (Cheese)(itemHandler.getStackInSlot(i).getItem());
                     ItemStack newCheese = new ItemStack(cheeseItem.getAged(envType), 1);
-                    itemHandler.removeItem(i, 1);
-                    itemHandler.setItem(i, newCheese);
+                    itemHandler.extractItem(i, 1, false);
+                    itemHandler.insertItem(i, newCheese, false);
                 }
             }
         }
@@ -113,14 +119,14 @@ public class CheeseRackTileEntity extends BlockEntity {
 
     @Override
     public void load(CompoundTag tag) {
-        itemHandler.fromTag(tag.getList("inv", Tag.TAG_COMPOUND));
+        itemHandler.deserializeNBT(tag.getCompound("inv"));
         timer = tag.getInt("timer");
         super.load(tag);
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
-        tag.put("inv", itemHandler.createTag());
+        tag.put("inv", itemHandler.serializeNBT());
         tag.putInt("timer", timer);
         super.saveAdditional(tag);
     }

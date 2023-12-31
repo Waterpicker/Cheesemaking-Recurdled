@@ -21,7 +21,7 @@ public class CheeseRackTileEntityRenderer implements BlockEntityRenderer<CheeseR
     @Override
     public void render(CheeseRackTileEntity tileEntityIn, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
         for(int i = 0; i < 8; i++) {
-            ItemStack stack = tileEntityIn.itemHandler.getItem(i);
+            ItemStack stack = tileEntityIn.itemHandler.getStackInSlot(i);
             matrixStackIn.pushPose();
             Lighting.setupFor3DItems();
             matrixStackIn.translate(0.25,0.25,0.25);
