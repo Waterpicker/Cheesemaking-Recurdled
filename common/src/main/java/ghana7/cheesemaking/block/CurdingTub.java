@@ -1,10 +1,11 @@
 package ghana7.cheesemaking.block;
 
 import ghana7.cheesemaking.CheesemakingMod;
-import ghana7.cheesemaking.item.cheese.Curd;
 import ghana7.cheesemaking.item.Rennet;
+import ghana7.cheesemaking.item.cheese.Curd;
 import ghana7.cheesemaking.tileentity.CurdingTubTileEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -43,7 +44,7 @@ public class CurdingTub extends Block implements EntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
-        return CheesemakingMod.CURDING_TUB_TE.get().create();
+        return CheesemakingMod.CURDING_TUB_TE.get().create(blockPos, blockState);
     }
 
     @Override
@@ -69,37 +70,36 @@ public class CurdingTub extends Block implements EntityBlock {
                 }
                 return InteractionResult.SUCCESS;
             } else if(stack.getItem() instanceof Rennet) {
-                ItemStack newStack = curdingTubTileEntity.itemHandler.insertItem(0, stack, false);
+                ItemStack newStack = curdingTubTileEntity.itemHandler.addItem(stack);
                 if(!player.isCreative()) {
                     player.setItemInHand(interactionHand, newStack);
                 }
 
-                return ActionResultType.SUCCESS;
-            } else if(!curdingTubTileEntity.itemHandler.getStackInSlot(1).isEmpty() && (stack.isEmpty() || stack.getItem() instanceof Curd)) {
+                return InteractionResult.SUCCESS;
+            } else if(!curdingTubTileEntity.itemHandler.getItem(1).isEmpty() && (stack.isEmpty() || stack.getItem() instanceof Curd)) {
                 if(stack.isEmpty()) {
-                    player.setHeldItem(handIn, curdingTubTileEntity.itemHandler.extractItem(1, 4, false));
+                    player.setItemInHand(interactionHand, curdingTubTileEntity.itemHandler.getItem(1));
                 } else {
-                    player.getHeldItem(handIn).grow(curdingTubTileEntity.itemHandler.extractItem(1, 4, false).getCount());
+                    player.getItemInHand(interactionHand).grow(curdingTubTileEntity.itemHandler.getItem(1).getCount());
                 }
-                return ActionResultType.SUCCESS;
-            } else if(!curdingTubTileEntity.itemHandler.getStackInSlot(0).isEmpty() && (stack.isEmpty() || stack.getItem() instanceof Rennet)) {
+                return InteractionResult.SUCCESS;
+            } else if(!curdingTubTileEntity.itemHandler.getItem(0).isEmpty() && (stack.isEmpty() || stack.getItem() instanceof Rennet)) {
                 if(stack.isEmpty()) {
-                    player.setHeldItem(handIn, curdingTubTileEntity.itemHandler.extractItem(0, 4, false));
+                    player.setItemInHand(interactionHand, curdingTubTileEntity.itemHandler.getItem(0));
                 } else {
-                    player.getHeldItem(handIn).grow(curdingTubTileEntity.itemHandler.extractItem(0, 4, false).getCount());
+                    player.getItemInHand(interactionHand).grow(curdingTubTileEntity.itemHandler.getItem(0).getCount());
                 }
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
-            return ActionResultType.PASS;
+            return InteractionResult.PASS;
         }
     }
 
     @Override
-    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
-        super.onBlockHarvested(worldIn, pos, state, player);
-        TileEntity tileEntity = worldIn.getTileEntity(pos);
-        if(tileEntity instanceof CurdingTubTileEntity) {
-            InventoryHelper.dropItems(worldIn, pos, ((CurdingTubTileEntity)tileEntity).getAllItems());
+    public void playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
+        super.playerWillDestroy(level, blockPos, blockState, player);
+        if(level.getBlockEntity(blockPos) instanceof CurdingTubTileEntity tileEntity) {
+            Containers.dropContents(level, blockPos, tileEntity.getAllItems());
         }
     }
 }

@@ -2,7 +2,7 @@ package ghana7.cheesemaking.item.cheese;
 
 import ghana7.cheesemaking.CheesemakingMod;
 import ghana7.cheesemaking.item.Cheese;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.Item;
 
 public class GenericGruyere extends Cheese {
     public GenericGruyere() {

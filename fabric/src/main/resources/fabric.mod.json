@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "cheesemaking",
+  "version": "${version}",
+  "name": "Cheesemaking Mod",
+  "description": "Lets you make different types of cheese!",
+  "authors": [
+    "ghana7, Waterpicker, Mysticpasta1"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": "https://github.com/ghana7/Cheesemaking"
+  },
+  "license": "LGPLv3",
+  "icon": "assets/cheesemaking/largelogo.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "ghana7.cheesemaking.fabric.CheesemakingModFabric"
+    ]
+  },
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.20.1",
+    "architectury": ">=9.1.12"
+  }
+}

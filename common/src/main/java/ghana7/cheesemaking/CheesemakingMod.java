@@ -1,33 +1,31 @@
 package ghana7.cheesemaking;
 
+import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
+import dev.architectury.registry.client.rendering.RenderTypeRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import ghana7.cheesemaking.block.CheeseRack;
 import ghana7.cheesemaking.block.CurdingTub;
-import ghana7.cheesemaking.block.MilkBlock;
 import ghana7.cheesemaking.item.Rennet;
 import ghana7.cheesemaking.item.cheese.*;
 import ghana7.cheesemaking.rendering.CheeseRackTileEntityRenderer;
 import ghana7.cheesemaking.rendering.CurdingTubTileEntityRenderer;
 import ghana7.cheesemaking.tileentity.CheeseRackTileEntity;
 import ghana7.cheesemaking.tileentity.CurdingTubTileEntity;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.BlockState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(CheesemakingMod.MODID)
 public class CheesemakingMod {
     // Directly reference a log4j logger.
     public static final Logger LOGGER = LogManager.getLogger();
@@ -39,8 +37,7 @@ public class CheesemakingMod {
     private static final DeferredRegister<MenuType<?>> CONTAINERS = DeferredRegister.create(MODID, Registries.MENU);
 
     //blocks
-    public static final RegistrySupplier<Block> CURDING_TUB = BLOCKS.register("curding_tub", () ->
-            new CurdingTub()
+    public static final RegistrySupplier<Block> CURDING_TUB = BLOCKS.register("curding_tub", CurdingTub::new
     );
 
     public static final RegistrySupplier<Block> MILK_BLOCK = BLOCKS.register("milk_block", () -> new Block(BlockBehaviour.Properties.of()));
@@ -115,32 +112,19 @@ public class CheesemakingMod {
     );
 
 
-    public CheesemakingMod() {
-
-        ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
-        BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
-        TILE_ENTITY_TYPES.register(FMLJavaModLoadingContext.get().getModEventBus());
-        CONTAINERS.register(FMLJavaModLoadingContext.get().getModEventBus());
-
-        // Register the doClientStuff method for modloading
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
-
-        // Register ourselves for server and other game events we are interested in
-        MinecraftForge.EVENT_BUS.register(this);
-
-
+    public static void init() {
+        BLOCKS.register();
+        ITEMS.register();
+        TILE_ENTITY_TYPES.register();
+        ClientLifecycleEvent.CLIENT_SETUP.register(instance -> doClientStuff());
     }
 
-    private void doClientStuff(final FMLClientSetupEvent event) {
-
-
+    private static void doClientStuff() {
         // do something that can only be done on the client
         BlockEntityRendererRegistry.register(CURDING_TUB_TE.get(), CurdingTubTileEntityRenderer::new);
-        ClientRegistry.bindTileEntityRenderer(CHEESE_RACK_TE.get(), CheeseRackTileEntityRenderer::new);
+        BlockEntityRendererRegistry.register(CHEESE_RACK_TE.get(), CheeseRackTileEntityRenderer::new);
 
-        RenderTypeLookup.setRenderLayer(CURDING_TUB.get(), RenderType.getTranslucent());
-        RenderTypeLookup.setRenderLayer(CHEESE_RACK.get(), RenderType.getTranslucent());
+        RenderTypeRegistry.register(RenderType.translucent(), CURDING_TUB.get());
+        RenderTypeRegistry.register(RenderType.translucent(), CHEESE_RACK.get());
     }
-
-
 }

@@ -2,15 +2,17 @@ package ghana7.cheesemaking.item.cheese;
 
 import ghana7.cheesemaking.CheesemakingMod;
 import ghana7.cheesemaking.item.Cheese;
-import net.minecraft.item.Food;
-import net.minecraft.item.Item;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
 
 public class SnackJack extends Cheese {
     public SnackJack() {
-        super(new Food.Builder()
-        .hunger(3)
-        .saturation(3)
-        .fastToEat(), 1);
+        super(new FoodProperties.Builder()
+        .nutrition(3)
+        .saturationMod(3)
+        .fast(), 1);
     }
 
     @Override

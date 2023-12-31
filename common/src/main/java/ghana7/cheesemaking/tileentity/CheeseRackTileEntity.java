@@ -41,12 +41,14 @@ public class CheeseRackTileEntity extends BlockEntity {
 
             @Override
             public void setItem(int slot, @NotNull ItemStack stack) {
+                assert level != null;
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
                 super.setItem(slot, stack);
             }
 
             @Override
-            public ItemStack removeItem(int slot, int amount) {
+            public @NotNull ItemStack removeItem(int slot, int amount) {
+                assert level != null;
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
                 return super.removeItem(slot, amount);
             }
@@ -66,6 +68,7 @@ public class CheeseRackTileEntity extends BlockEntity {
     }
 
     public void tick() {
+        assert level != null;
         if(level.isClientSide()) {
             return;
         }
@@ -89,6 +92,7 @@ public class CheeseRackTileEntity extends BlockEntity {
     }
 
     private Cheese.EnvironmentType getEnvironmentType() {
+        assert level != null;
         if(level.dimension().equals(Level.NETHER)) {
             return Cheese.EnvironmentType.NETHER;
         }
@@ -122,7 +126,7 @@ public class CheeseRackTileEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
+    public @NotNull CompoundTag getUpdateTag() {
         var nbt = new CompoundTag();
         saveAdditional(nbt);
         return nbt;

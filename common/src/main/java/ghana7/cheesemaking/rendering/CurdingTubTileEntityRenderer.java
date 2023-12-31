@@ -1,8 +1,6 @@
 package ghana7.cheesemaking.rendering;
 
-import com.mojang.blaze3d.platform.DisplayData;
 import com.mojang.blaze3d.platform.Lighting;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import ghana7.cheesemaking.CheesemakingMod;
@@ -11,19 +9,16 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.joml.Vector3f;
 
 import static net.fabricmc.api.EnvType.CLIENT;
 import static net.minecraft.world.item.ItemDisplayContext.FIXED;
 
 @Environment(CLIENT)
 public class CurdingTubTileEntityRenderer implements BlockEntityRenderer<CurdingTubTileEntity> {
-    public CurdingTubTileEntityRenderer(TileEntityRendererDispatcher rendererDispatcherIn) {
-        super(rendererDispatcherIn);
-    }
+    public CurdingTubTileEntityRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override
     public void render(CurdingTubTileEntity tileEntityIn, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
@@ -38,10 +33,10 @@ public class CurdingTubTileEntityRenderer implements BlockEntityRenderer<Curding
             blockRenderer.renderSingleBlock(state, matrixStackIn, bufferIn, combinedLightIn, combinedOverlayIn);
             matrixStackIn.popPose();
         }
-        int numRennets = tileEntityIn.itemHandler.getStackInSlot(0).getCount();
-        ItemStack rennetItemStack = tileEntityIn.itemHandler.getStackInSlot(0);
-        int numCurds = tileEntityIn.itemHandler.getStackInSlot(1).getCount();
-        ItemStack curdItemStack = tileEntityIn.itemHandler.getStackInSlot(1);
+        int numRennets = tileEntityIn.itemHandler.getItem(0).getCount();
+        ItemStack rennetItemStack = tileEntityIn.itemHandler.getItem(0);
+        int numCurds = tileEntityIn.itemHandler.getItem(1).getCount();
+        ItemStack curdItemStack = tileEntityIn.itemHandler.getItem(1);
         matrixStackIn.pushPose();
         Lighting.setupForFlatItems();
         if(numRennets > 0) {
