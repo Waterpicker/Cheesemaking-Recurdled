@@ -4,82 +4,74 @@ import ghana7.cheesemaking.CheesemakingMod;
 import ghana7.cheesemaking.item.cheese.Curd;
 import ghana7.cheesemaking.item.Rennet;
 import ghana7.cheesemaking.tileentity.CurdingTubTileEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.InventoryHelper;
-import net.minecraft.item.BucketItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.MilkBucketItem;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
-import net.minecraftforge.common.ToolType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MilkBucketItem;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
-
-public class CurdingTub extends Block {
-    private static final VoxelShape SHAPE = Block.makeCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
+public class CurdingTub extends Block implements EntityBlock {
+    private static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.0D, 16.0D);
 
     public CurdingTub() {
-        super(Properties.create(Material.WOOD)
+        super(Properties.copy(Blocks.OAK_WOOD)
         .sound(SoundType.WOOD)
-        .hardnessAndResistance(2.0F)
-        .notSolid().setOpaque((BlockState p_test_1_, IBlockReader p_test_2_, BlockPos p_test_3_) -> (false)));
+                .strength(2.0F)
+                .noOcclusion().isViewBlocking((blockState, blockGetter, blockPos) -> false));
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos, CollisionContext collisionContext) {
         return SHAPE;
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
     }
 
     @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
         return CheesemakingMod.CURDING_TUB_TE.get().create();
     }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-
-        if(worldIn.isRemote) {
-            return ActionResultType.SUCCESS;
+    public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+        if(level.isClientSide()) {
+            return InteractionResult.SUCCESS;
         } else {
             //CheesemakingMod.LOGGER.debug(handIn);
-            ItemStack stack = player.getHeldItem(handIn);
-            CurdingTubTileEntity curdingTubTileEntity = (CurdingTubTileEntity) worldIn.getTileEntity(pos);
+            ItemStack stack = player.getItemInHand(interactionHand);
+            CurdingTubTileEntity curdingTubTileEntity = (CurdingTubTileEntity) level.getBlockEntity(blockPos);
             if(stack.getItem() instanceof MilkBucketItem) {
                 if(curdingTubTileEntity.addMilk(1000)) {
                     if(!player.isCreative()) {
-                        player.setHeldItem(handIn, new ItemStack(Items.BUCKET, 1));
+                        player.setItemInHand(interactionHand, new ItemStack(Items.BUCKET, 1));
                     }
                 }
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             } else if(stack.getItem() instanceof BucketItem) {
                 if(curdingTubTileEntity.removeMilk(1000)) {
                     if(!player.isCreative()) {
-                        player.setHeldItem(handIn, new ItemStack(Items.MILK_BUCKET, 1));
+                        player.setItemInHand(interactionHand, new ItemStack(Items.MILK_BUCKET, 1));
                     }
                 }
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             } else if(stack.getItem() instanceof Rennet) {
                 ItemStack newStack = curdingTubTileEntity.itemHandler.insertItem(0, stack, false);
                 if(!player.isCreative()) {
-                    player.setHeldItem(handIn, newStack);
+                    player.setItemInHand(interactionHand, newStack);
                 }
 
                 return ActionResultType.SUCCESS;

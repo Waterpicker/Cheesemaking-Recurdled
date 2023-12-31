@@ -4,50 +4,38 @@ import ghana7.cheesemaking.CheesemakingMod;
 import ghana7.cheesemaking.item.Cheese;
 import ghana7.cheesemaking.tileentity.CheeseRackTileEntity;
 import ghana7.cheesemaking.tileentity.CurdingTubTileEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.material.MaterialColor;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.InventoryHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
-import net.minecraftforge.common.ToolType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.Containers;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
-
-public class CheeseRack extends Block {
+public class CheeseRack extends Block implements EntityBlock {
     public CheeseRack() {
-        super(Properties.create(Material.WOOD)
+        super(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
                 .sound(SoundType.WOOD)
-                .hardnessAndResistance(2.0F)
-                .notSolid().setOpaque((BlockState p_test_1_, IBlockReader p_test_2_, BlockPos p_test_3_) -> (false)));
-    }
-
-    @Override
-    public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos) {
-        return true;
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
+                .strength(2.0F)
+                .noOcclusion().isViewBlocking((blockState, blockGetter, blockPos) -> false));
     }
 
     @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
         return CheesemakingMod.CHEESE_RACK_TE.get().create();
     }
 
+    @Override
+    public boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+        return true;
+    }
 
     @Override
     public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
@@ -92,11 +80,10 @@ public class CheeseRack extends Block {
     }
 
     @Override
-    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
-        super.onBlockHarvested(worldIn, pos, state, player);
-        TileEntity tileEntity = worldIn.getTileEntity(pos);
-        if(tileEntity instanceof CheeseRackTileEntity) {
-            InventoryHelper.dropItems(worldIn, pos, ((CheeseRackTileEntity)tileEntity).getAllItems());
+    public void playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
+        super.playerWillDestroy(level, blockPos, blockState, player);
+        if(level.getBlockEntity(blockPos) instanceof CheeseRackTileEntity tileEntity) {
+            Containers.dropContents(level, blockPos, tileEntity.getAllItems());
         }
     }
 }
