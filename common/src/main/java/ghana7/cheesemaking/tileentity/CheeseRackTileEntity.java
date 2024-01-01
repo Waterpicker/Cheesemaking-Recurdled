@@ -77,12 +77,12 @@ public class CheeseRackTileEntity extends BlockEntity {
         }
 
         if(timer > 0) {
-            if(true) {
-                timer--;
-            }
+            System.out.println("Rack " + timer);
+            timer--;
         }
 
         if(timer <= 0) {
+            System.out.println("ITS CHEESE TIME!");
             timer = timerMax;
             //CheesemakingMod.LOGGER.debug(getEnvironmentType());
             Cheese.EnvironmentType envType = getEnvironmentType();

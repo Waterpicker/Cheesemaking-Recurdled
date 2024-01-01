@@ -1,7 +1,10 @@
 package ghana7.cheesemaking.tileentity;
 
 import ghana7.cheesemaking.CheesemakingMod;
+import ghana7.cheesemaking.block.ItemStackHandler;
 import ghana7.cheesemaking.item.Cheese;
+import ghana7.cheesemaking.item.Rennet;
+import ghana7.cheesemaking.item.cheese.Curd;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -20,45 +23,56 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class CurdingTubTileEntity extends BlockEntity {
-    public SimpleContainer itemHandler = createHandler();
-    private SimpleContainer createHandler() {
-        return new SimpleContainer(2) {
+    public ItemStackHandler itemHandler = createHandler();
+    private ItemStackHandler createHandler() {
+        return new ItemStackHandler(2) {
             @Override
-            public void setChanged() {
-                CurdingTubTileEntity.this.setChanged();
+            protected void onContentsChanged(int slot) {
+                setChanged();
             }
 
             @Override
-            public boolean canPlaceItem(int slot, @NotNull ItemStack stack) {
-                return stack.getItem() instanceof Cheese;
+            public boolean isItemValid(int slot, ItemStack stack) {
+                if(slot == 0) {
+                    return stack.getItem() instanceof Rennet;
+                }
+                if(slot == 1) {
+                    return stack.getItem() instanceof Curd;
+                }
+                return true;
             }
 
             @Override
-            public int getMaxStackSize() {
-                return 1;
+            protected int getStackLimit(int slot, ItemStack stack) {
+                return 4;
             }
 
             @Override
-            public void setItem(int slot, @NotNull ItemStack stack) {
+            public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
-                super.setItem(slot, stack);
+                return super.insertItem(slot, stack, simulate);
             }
 
             @Override
-            public ItemStack removeItem(int slot, int amount) {
+            public ItemStack extractItem(int slot, int amount, boolean simulate) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
-                return super.removeItem(slot, amount);
+                return super.extractItem(slot, amount, simulate);
             }
         };
     }
 
     public NonNullList<ItemStack> getAllItems() {
-        return IntStream.range(0, itemHandler.getContainerSize()).mapToObj(a -> itemHandler.getItem(a)).collect(Collectors.toCollection(NonNullList::create));
+        NonNullList<ItemStack> items = NonNullList.create();
+        for(int i = 0; i < itemHandler.getSlots(); i++) {
+            ItemStack stack = itemHandler.getStackInSlot(i);
+            items.add(stack);
+        }
+        return items;
     }
 
-    private final int timerMax = 60; //3 seconds
+    private int timerMax = 60; //3 seconds
     private int timer = timerMax;
-    private final int milkCapacity = 4000;
+    private int milkCapacity = 4000;
     private int currentMilkAmount = 0;
 
     public CurdingTubTileEntity(BlockPos blockPos, BlockState blockState) {
@@ -67,40 +81,43 @@ public class CurdingTubTileEntity extends BlockEntity {
     }
 
     public void tick() {
-        if(level.isClientSide()) {
+        if(level.isClientSide) {
             return;
         }
 
         if(timer > 0) {
-            if(currentMilkAmount >= 1000 && !itemHandler.getItem(0).isEmpty() && itemHandler.getItem(1).getCount() < 4) {
+            if(currentMilkAmount >= 1000 && !itemHandler.getStackInSlot(0).isEmpty() && itemHandler.getStackInSlot(1).getCount() < 4) {
+                System.out.println("Tub: " + timer);
                 timer--;
             }
         }
 
         if(timer <= 0) {
+            System.out.println("A curd has arrived!");
             timer = timerMax;
             removeMilk(1000);
-            itemHandler.removeItem(0, 1);
-            itemHandler.setItem(1, new ItemStack(CheesemakingMod.CURD.get(), 1));
+            itemHandler.extractItem(0, 1, false);
+            itemHandler.insertItem(1, new ItemStack(CheesemakingMod.CURD.get(), 1), false);
         }
     }
 
     @Override
     public void load(CompoundTag tag) {
-        itemHandler.fromTag(tag.getList("inv", Tag.TAG_COMPOUND));
+        itemHandler.deserializeNBT(tag.getCompound("inv"));
         timer = tag.getInt("timer");
+        currentMilkAmount = tag.getInt("milkAmount");
         super.load(tag);
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
-        tag.put("inv", itemHandler.createTag());
+        tag.put("inv", itemHandler.serializeNBT());
         tag.putInt("timer", timer);
+        tag.putInt("milkAmount", currentMilkAmount);
         super.saveAdditional(tag);
     }
-
     @Override
-    public CompoundTag getUpdateTag() {
+    public @NotNull CompoundTag getUpdateTag() {
         var nbt = new CompoundTag();
         saveAdditional(nbt);
         return nbt;
@@ -125,13 +142,18 @@ public class CurdingTubTileEntity extends BlockEntity {
     }
 
     public boolean removeMilk(int amount) {
+        System.out.println("Milk: " + amount);
         if(currentMilkAmount >= amount) {
             currentMilkAmount -= amount;
+
+            System.out.println("Milk: " + amount +  " :D");
             //CheesemakingMod.LOGGER.debug(currentMilkAmount);
             setChanged();
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
             return true;
         }
+
+        System.out.println("Milk: " + amount +  " :(");
         return false;
     }
 

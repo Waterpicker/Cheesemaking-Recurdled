@@ -33,10 +33,10 @@ public class CurdingTubTileEntityRenderer implements BlockEntityRenderer<Curding
             blockRenderer.renderSingleBlock(state, matrixStackIn, bufferIn, combinedLightIn, combinedOverlayIn);
             matrixStackIn.popPose();
         }
-        int numRennets = tileEntityIn.itemHandler.getItem(0).getCount();
-        ItemStack rennetItemStack = tileEntityIn.itemHandler.getItem(0);
-        int numCurds = tileEntityIn.itemHandler.getItem(1).getCount();
-        ItemStack curdItemStack = tileEntityIn.itemHandler.getItem(1);
+        int numRennets = tileEntityIn.itemHandler.getStackInSlot(0).getCount();
+        ItemStack rennetItemStack = tileEntityIn.itemHandler.getStackInSlot(0);
+        int numCurds = tileEntityIn.itemHandler.getStackInSlot(1).getCount();
+        ItemStack curdItemStack = tileEntityIn.itemHandler.getStackInSlot(1);
         matrixStackIn.pushPose();
         Lighting.setupForFlatItems();
         if(numRennets > 0) {

@@ -16,49 +16,53 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BeehiveBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3d;
 
-public class CheeseRack extends Block {
+public class CheeseRack extends Block implements EntityBlock {
     public CheeseRack() {
-        super(Properties.create(Material.WOOD)
+        super(Properties.copy(Blocks.OAK_PLANKS)
                 .sound(SoundType.WOOD)
-                .hardnessAndResistance(2.0F)
-                .notSolid().setOpaque((BlockState p_test_1_, IBlockReader p_test_2_, BlockPos p_test_3_) -> (false)));
+                .strength(2.0F)
+                .noOcclusion().isViewBlocking((blockState, blockGetter, blockPos) -> false));
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos) {
-        return true;
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
+    public boolean propagatesSkylightDown(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
         return true;
     }
 
     @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return CheesemakingMod.CHEESE_RACK_TE.get().create();
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+        return CheesemakingMod.CHEESE_RACK_TE.get().create(blockPos, blockState);
     }
 
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> blockEntityType) {
+        return !level.isClientSide && blockEntityType == CheesemakingMod.CHEESE_RACK_TE.get() ? (level1, blockPos, blockState1, blockEntity) -> {
+            System.out.println("EEP!");
+            ((CheeseRackTileEntity) blockEntity).tick();
+        } : null;
+    }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-
-        if(worldIn.isRemote) {
-            return ActionResultType.SUCCESS;
+    public InteractionResult use(BlockState blockState, Level worldIn, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
+        if(worldIn.isClientSide) {
+            return InteractionResult.SUCCESS;
         } else {
             //CheesemakingMod.LOGGER.debug(handIn);
-            ItemStack stack = player.getHeldItem(handIn);
-            CheeseRackTileEntity cheeseRackTileEntity = (CheeseRackTileEntity) worldIn.getTileEntity(pos);
-            Vector3d hitPos = hit.getHitVec().subtract(pos.getX(), pos.getY(), pos.getZ());
+            ItemStack stack = player.getItemInHand(handIn);
+            CheeseRackTileEntity cheeseRackTileEntity = (CheeseRackTileEntity) worldIn.getBlockEntity(pos);
+            Vec3 hitPos = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
             //CheesemakingMod.LOGGER.debug(hitPos);
             int hitIndex = 0;
             if(hitPos.x > 0.5) {
@@ -75,28 +79,29 @@ public class CheeseRack extends Block {
                 ItemStack newStack = cheeseRackTileEntity.itemHandler.insertItem(hitIndex, stack, false);
                 if(!player.isCreative()) {
 
-                    player.setHeldItem(handIn, newStack);
+                    player.setItemInHand(handIn, newStack);
                 }
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             } else if(!cheeseRackTileEntity.itemHandler.getStackInSlot(hitIndex).isEmpty() && (stack.isEmpty() || stack.getItem().equals(cheeseRackTileEntity.itemHandler.getStackInSlot(hitIndex).getItem()))) {
 
                 if(stack.isEmpty()) {
-                    player.setHeldItem(handIn, cheeseRackTileEntity.itemHandler.extractItem(hitIndex, 1, false));
+                    player.setItemInHand(handIn, cheeseRackTileEntity.itemHandler.extractItem(hitIndex, 1, false));
                 } else {
-                    player.getHeldItem(handIn).grow(cheeseRackTileEntity.itemHandler.extractItem(hitIndex, 1, false).getCount());
+                    player.getItemInHand(handIn).grow(cheeseRackTileEntity.itemHandler.extractItem(hitIndex, 1, false).getCount());
                 }
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
-            return ActionResultType.PASS;
+            return InteractionResult.PASS;
         }
     }
 
     @Override
-    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
-        super.onBlockHarvested(worldIn, pos, state, player);
-        TileEntity tileEntity = worldIn.getTileEntity(pos);
+    public void playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
+        super.playerWillDestroy(level, blockPos, blockState, player);
+
+        BlockEntity tileEntity = level.getBlockEntity(blockPos);
         if(tileEntity instanceof CheeseRackTileEntity) {
-            InventoryHelper.dropItems(worldIn, pos, ((CheeseRackTileEntity)tileEntity).getAllItems());
+            Containers.dropContents(level, blockPos, ((CheeseRackTileEntity)tileEntity).getAllItems());
         }
     }
 }
