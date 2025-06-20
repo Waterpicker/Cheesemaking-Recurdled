@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "cheesemaking:block/milk_block",
+    "north": "cheesemaking:block/milk_block",
+    "south": "cheesemaking:block/milk_block",
+    "east": "cheesemaking:block/milk_block",
+    "west": "cheesemaking:block/milk_block",
+    "up": "cheesemaking:block/milk_block",
+    "down": "cheesemaking:block/milk_block"
+  }
+}

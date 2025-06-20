@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern":
+  [
+    "l l",
+    "lpl"
+  ],
+  "key":
+  {
+    "l":
+    {
+      "tag": "minecraft:logs"
+    },
+    "p":
+    {
+      "tag": "minecraft:planks"
+    }
+  },
+  "result":
+  {
+    "item": "cheesemaking:curding_tub",
+    "count": 1
+  }
+}
